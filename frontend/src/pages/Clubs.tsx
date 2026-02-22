@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, X, Pencil, Trash2 } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
 import api from '../services/api';
 
 interface Club {
@@ -12,17 +13,14 @@ interface Club {
 }
 
 const Clubs = () => {
+    const { user } = useOutletContext<any>();
     const [clubs, setClubs] = useState<Club[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Modal & Form State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [formData, setFormData] = useState({
-        club_name: '',
-        founded_year: '',
-        owner_name: '',
-        club_email: ''
+        club_name: '', founded_year: '', owner_name: '', club_email: ''
     });
 
     useEffect(() => {
@@ -40,7 +38,6 @@ const Clubs = () => {
         }
     };
 
-    // Form Handlers
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -62,7 +59,6 @@ const Clubs = () => {
         setIsModalOpen(true);
     };
 
-    // CREATE and UPDATE logic
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -72,19 +68,18 @@ const Clubs = () => {
                 await api.post('/clubs', formData);
             }
             setIsModalOpen(false);
-            fetchClubs(); // Refresh the table
+            fetchClubs();
         } catch (error) {
             console.error("Error saving club:", error);
             alert("Failed to save club. Ensure the name/email is unique.");
         }
     };
 
-    // DELETE logic
     const handleDelete = async (id: number) => {
         if (window.confirm("Are you sure you want to delete this club?")) {
             try {
                 await api.delete(`/clubs/${id}`);
-                fetchClubs(); // Refresh the table
+                fetchClubs();
             } catch (error) {
                 console.error("Error deleting club:", error);
             }
@@ -95,12 +90,15 @@ const Clubs = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-800">Football Clubs</h1>
-                <button
-                    onClick={openAddModal}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
-                >
-                    <Plus size={20} /> Add New Club
-                </button>
+                {/* ADMIN ONLY CHECK */}
+                {user?.role === 'Admin' && (
+                    <button
+                        onClick={openAddModal}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                    >
+                        <Plus size={20} /> Add New Club
+                    </button>
+                )}
             </div>
 
             {loading ? (
@@ -114,7 +112,8 @@ const Clubs = () => {
                                 <th className="p-4 font-semibold">Founded</th>
                                 <th className="p-4 font-semibold">Trophies</th>
                                 <th className="p-4 font-semibold">Owner</th>
-                                <th className="p-4 font-semibold text-center">Actions</th>
+                                {/* ADMIN ONLY CHECK */}
+                                {user?.role === 'Admin' && <th className="p-4 font-semibold text-center">Actions</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
@@ -128,14 +127,17 @@ const Clubs = () => {
                                         </span>
                                     </td>
                                     <td className="p-4 text-gray-600">{club.owner_name}</td>
-                                    <td className="p-4 flex justify-center gap-3">
-                                        <button onClick={() => openEditModal(club)} className="text-blue-600 hover:text-blue-800 transition-colors p-1" title="Edit">
-                                            <Pencil size={18} />
-                                        </button>
-                                        <button onClick={() => handleDelete(club.club_id)} className="text-red-600 hover:text-red-800 transition-colors p-1" title="Delete">
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </td>
+                                    {/* ADMIN ONLY CHECK */}
+                                    {user?.role === 'Admin' && (
+                                        <td className="p-4 flex justify-center gap-3">
+                                            <button onClick={() => openEditModal(club)} className="text-blue-600 hover:text-blue-800 transition-colors p-1" title="Edit">
+                                                <Pencil size={18} />
+                                            </button>
+                                            <button onClick={() => handleDelete(club.club_id)} className="text-red-600 hover:text-red-800 transition-colors p-1" title="Delete">
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
@@ -143,7 +145,6 @@ const Clubs = () => {
                 </div>
             )}
 
-            {/* Add / Edit Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">

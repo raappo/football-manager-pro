@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, X, Pencil, Trash2 } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
 import api from '../services/api';
 
 interface PlayerRoster {
@@ -16,11 +17,11 @@ interface Club {
 }
 
 const Players = () => {
+    const { user } = useOutletContext<any>();
     const [players, setPlayers] = useState<PlayerRoster[]>([]);
     const [clubs, setClubs] = useState<Club[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Modal & Form State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [errorMsg, setErrorMsg] = useState('');
@@ -58,7 +59,6 @@ const Players = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // Open Add Modal
     const openAddModal = () => {
         setEditingId(null);
         setFormData({ f_name: '', l_name: '', dob: '', position: '', city: '', state: '', pincode: '', club_id: '' });
@@ -66,7 +66,6 @@ const Players = () => {
         setIsModalOpen(true);
     };
 
-    // Open Edit Modal & Fetch Data
     const openEditModal = async (id: number) => {
         setErrorMsg('');
         try {
@@ -81,7 +80,7 @@ const Players = () => {
                 city: player.city,
                 state: player.state,
                 pincode: player.pincode,
-                club_id: player.club_id || '' // Convert null to empty string for dropdown
+                club_id: player.club_id || ''
             });
             setIsModalOpen(true);
         } catch (error) {
@@ -121,12 +120,15 @@ const Players = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-800">Player Roster</h1>
-                <button
-                    onClick={openAddModal}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
-                >
-                    <Plus size={20} /> Register Player
-                </button>
+                {/* ADMIN ONLY CHECK */}
+                {user?.role === 'Admin' && (
+                    <button
+                        onClick={openAddModal}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                    >
+                        <Plus size={20} /> Register Player
+                    </button>
+                )}
             </div>
 
             {loading ? (
@@ -140,7 +142,8 @@ const Players = () => {
                                 <th className="p-4 font-semibold">Age</th>
                                 <th className="p-4 font-semibold">Position</th>
                                 <th className="p-4 font-semibold">Current Club</th>
-                                <th className="p-4 font-semibold text-center">Actions</th>
+                                {/* ADMIN ONLY CHECK */}
+                                {user?.role === 'Admin' && <th className="p-4 font-semibold text-center">Actions</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
@@ -154,14 +157,17 @@ const Players = () => {
                                             {player.club_name || 'Free Agent'}
                                         </span>
                                     </td>
-                                    <td className="p-4 flex justify-center gap-3">
-                                        <button onClick={() => openEditModal(player.player_id)} className="text-blue-600 hover:text-blue-800 transition-colors p-1" title="Edit">
-                                            <Pencil size={18} />
-                                        </button>
-                                        <button onClick={() => handleDelete(player.player_id)} className="text-red-600 hover:text-red-800 transition-colors p-1" title="Delete">
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </td>
+                                    {/* ADMIN ONLY CHECK */}
+                                    {user?.role === 'Admin' && (
+                                        <td className="p-4 flex justify-center gap-3">
+                                            <button onClick={() => openEditModal(player.player_id)} className="text-blue-600 hover:text-blue-800 transition-colors p-1" title="Edit">
+                                                <Pencil size={18} />
+                                            </button>
+                                            <button onClick={() => handleDelete(player.player_id)} className="text-red-600 hover:text-red-800 transition-colors p-1" title="Delete">
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
@@ -169,7 +175,6 @@ const Players = () => {
                 </div>
             )}
 
-            {/* Add / Edit Player Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl overflow-hidden">

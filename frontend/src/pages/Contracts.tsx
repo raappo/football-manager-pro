@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Plus, X, Trash2, DollarSign } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
 import api from '../services/api';
 
 const Contracts = () => {
+    const { user } = useOutletContext<any>();
     const [contracts, setContracts] = useState<any[]>([]);
     const [players, setPlayers] = useState<any[]>([]);
     const [clubs, setClubs] = useState<any[]>([]);
@@ -50,9 +52,12 @@ const Contracts = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-800">Financials & Contracts</h1>
-                <button onClick={() => setIsModalOpen(true)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-                    <Plus size={20} /> New Contract
-                </button>
+                {/* ADMIN ONLY CHECK */}
+                {user?.role === 'Admin' && (
+                    <button onClick={() => setIsModalOpen(true)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                        <Plus size={20} /> New Contract
+                    </button>
+                )}
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -63,7 +68,8 @@ const Contracts = () => {
                             <th className="p-4">Club</th>
                             <th className="p-4">Weekly Salary</th>
                             <th className="p-4">Duration</th>
-                            <th className="p-4 text-center">Actions</th>
+                            {/* ADMIN ONLY CHECK */}
+                            {user?.role === 'Admin' && <th className="p-4 text-center">Actions</th>}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -77,9 +83,12 @@ const Contracts = () => {
                                 <td className="p-4 text-sm text-gray-500">
                                     {c.start_date} to {c.end_date}
                                 </td>
-                                <td className="p-4 flex justify-center">
-                                    <button onClick={() => handleDelete(c.contract_id)} className="text-red-600 p-1"><Trash2 size={18} /></button>
-                                </td>
+                                {/* ADMIN ONLY CHECK */}
+                                {user?.role === 'Admin' && (
+                                    <td className="p-4 flex justify-center">
+                                        <button onClick={() => handleDelete(c.contract_id)} className="text-red-600 p-1"><Trash2 size={18} /></button>
+                                    </td>
+                                )}
                             </tr>
                         ))}
                     </tbody>

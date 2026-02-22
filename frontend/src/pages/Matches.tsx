@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, X, Pencil, Trash2 } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
 import api from '../services/api';
 
 interface Match {
@@ -11,6 +12,7 @@ interface Match {
 interface DropdownItem { id: number; name: string; }
 
 const Matches = () => {
+    const { user } = useOutletContext<any>();
     const [matches, setMatches] = useState<Match[]>([]);
     const [clubs, setClubs] = useState<DropdownItem[]>([]);
     const [stadiums, setStadiums] = useState<DropdownItem[]>([]);
@@ -38,7 +40,6 @@ const Matches = () => {
         const [clubRes, stadRes] = await Promise.all([
             api.get('/clubs'), api.get('/matches/stadiums')
         ]);
-        // Map to generic interface
         setClubs(clubRes.data.map((c: any) => ({ id: c.club_id, name: c.club_name })));
         setStadiums(stadRes.data.map((s: any) => ({ id: s.stadium_id, name: s.stadium_name })));
     };
@@ -82,9 +83,12 @@ const Matches = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-800">Match Schedule</h1>
-                <button onClick={() => openModal()} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-                    <Plus size={20} /> Schedule Match
-                </button>
+                {/* ADMIN ONLY CHECK */}
+                {user?.role === 'Admin' && (
+                    <button onClick={() => openModal()} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                        <Plus size={20} /> Schedule Match
+                    </button>
+                )}
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -97,7 +101,8 @@ const Matches = () => {
                             <th className="p-4 text-center">Score</th>
                             <th className="p-4">Away Team</th>
                             <th className="p-4">Stadium</th>
-                            <th className="p-4 text-center">Actions</th>
+                            {/* ADMIN ONLY CHECK */}
+                            {user?.role === 'Admin' && <th className="p-4 text-center">Actions</th>}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -113,10 +118,13 @@ const Matches = () => {
                                 </td>
                                 <td className="p-4 font-bold text-gray-800">{match.away_team}</td>
                                 <td className="p-4 text-gray-600">{match.stadium_name}</td>
-                                <td className="p-4 flex justify-center gap-3">
-                                    <button onClick={() => openModal(match.match_id)} className="text-blue-600 p-1"><Pencil size={18} /></button>
-                                    <button onClick={() => handleDelete(match.match_id)} className="text-red-600 p-1"><Trash2 size={18} /></button>
-                                </td>
+                                {/* ADMIN ONLY CHECK */}
+                                {user?.role === 'Admin' && (
+                                    <td className="p-4 flex justify-center gap-3">
+                                        <button onClick={() => openModal(match.match_id)} className="text-blue-600 p-1"><Pencil size={18} /></button>
+                                        <button onClick={() => handleDelete(match.match_id)} className="text-red-600 p-1"><Trash2 size={18} /></button>
+                                    </td>
+                                )}
                             </tr>
                         ))}
                     </tbody>
