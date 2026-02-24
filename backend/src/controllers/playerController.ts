@@ -73,3 +73,84 @@ export const updatePlayer = async (req: Request, res: Response) => {
         res.status(400).json({ error: error.message || 'Failed to update player' });
     }
 };
+
+export const searchPlayers = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { name, nameMatchType, position, club_id, minAge, maxAge, minSalary, minTrophies } = req.query;
+
+        // Base query with TWO Joins
+        let sqlQuery = `
+            SELECT 
+                p.player_id, 
+                CONCAT(p.f_name, ' ', p.l_name) AS full_name,
+                TIMESTAMPDIFF(YEAR, p.dob, CURDATE()) AS age,
+                p.position,
+                COALESCE(c.club_name, 'Free Agent') AS club_name,
+                COALESCE(c.total_trophies, 0) AS club_trophies,
+                COALESCE(con.salary, 0) AS salary
+            FROM player p
+            LEFT JOIN club c ON p.club_id = c.club_id
+            LEFT JOIN contract con ON p.player_id = con.player_id
+            WHERE 1=1
+        `;
+
+        const queryParams: any[] = [];
+
+        // 1. SMART TEXT MATCHING (Wildcards)
+        if (name && typeof name === 'string') {
+            if (nameMatchType === 'startsWith') {
+                sqlQuery += ` AND CONCAT(p.f_name, ' ', p.l_name) LIKE ?`;
+                queryParams.push(`${name}%`); // Wildcard at the end
+            } else if (nameMatchType === 'endsWith') {
+                sqlQuery += ` AND CONCAT(p.f_name, ' ', p.l_name) LIKE ?`;
+                queryParams.push(`%${name}`); // Wildcard at the beginning
+            } else if (nameMatchType === 'exact') {
+                sqlQuery += ` AND CONCAT(p.f_name, ' ', p.l_name) = ?`;
+                queryParams.push(name); // No wildcards, exact match
+            } else {
+                // Default to 'contains'
+                sqlQuery += ` AND CONCAT(p.f_name, ' ', p.l_name) LIKE ?`;
+                queryParams.push(`%${name}%`); // Wildcards on both sides
+            }
+        }
+
+        // 2. EXACT DROPDOWN MATCHES
+        if (position) {
+            sqlQuery += ` AND p.position = ?`;
+            queryParams.push(position);
+        }
+
+        // Use exact ID for the club dropdown instead of text search
+        if (club_id) {
+            sqlQuery += ` AND p.club_id = ?`;
+            queryParams.push(Number(club_id));
+        }
+
+        // 3. NUMERIC RANGES
+        if (minAge) {
+            sqlQuery += ` AND TIMESTAMPDIFF(YEAR, p.dob, CURDATE()) >= ?`;
+            queryParams.push(Number(minAge));
+        }
+        if (maxAge) {
+            sqlQuery += ` AND TIMESTAMPDIFF(YEAR, p.dob, CURDATE()) <= ?`;
+            queryParams.push(Number(maxAge));
+        }
+        if (minSalary) {
+            sqlQuery += ` AND con.salary >= ?`;
+            queryParams.push(Number(minSalary));
+        }
+        if (minTrophies) {
+            sqlQuery += ` AND c.total_trophies >= ?`;
+            queryParams.push(Number(minTrophies));
+        }
+
+        // Order the results nicely
+        sqlQuery += ` ORDER BY salary DESC, age ASC`;
+
+        const [rows] = await pool.query(sqlQuery, queryParams);
+        res.json(rows);
+    } catch (error) {
+        console.error("Error searching players:", error);
+        res.status(500).json({ error: "Failed to search players" });
+    }
+};

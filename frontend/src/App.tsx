@@ -7,6 +7,7 @@ import Players from './pages/Players';
 import Matches from './pages/Matches';
 import Contracts from './pages/Contracts';
 import Login from './pages/Login';
+import Search from './pages/Search';
 
 function App() {
   const [user, setUser] = useState<any>(null);
@@ -45,6 +46,7 @@ function App() {
             <Route path="players" element={<Players />} />
             <Route path="matches" element={<Matches />} />
             <Route path="contracts" element={<Contracts />} />
+            <Route path="search" element={<Search />} />
             {/* Catch-all redirects back to dashboard */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

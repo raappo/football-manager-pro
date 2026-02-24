@@ -1,12 +1,16 @@
 import { Router } from 'express';
-import { getPlayers, createPlayer, deletePlayer, getPlayerById, updatePlayer } from '../controllers/playerController';
+import { getPlayers, getPlayerById, createPlayer, updatePlayer, deletePlayer, searchPlayers } from '../controllers/playerController';
 
 const router = Router();
 
 router.get('/', getPlayers);
-router.get('/:id', getPlayerById);       // <-- NEW: Fetch single player
+
+// MUST BE ABOVE /:id ROUTE
+router.get('/search', searchPlayers);
+
+router.get('/:id', getPlayerById);
 router.post('/', createPlayer);
-router.put('/:id', updatePlayer);        // <-- NEW: Update player
+router.put('/:id', updatePlayer);
 router.delete('/:id', deletePlayer);
 
 export default router;

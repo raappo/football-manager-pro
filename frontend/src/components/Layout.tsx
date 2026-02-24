@@ -1,5 +1,5 @@
 import { Link, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Users, Trophy, Calendar, FileText, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Trophy, Calendar, FileText, Search, LogOut } from 'lucide-react';
 
 interface LayoutProps {
     user: { username: string; role: string };
@@ -40,6 +40,9 @@ const Layout = ({ user, onLogout }: LayoutProps) => {
                     </Link>
                     <Link to="/contracts" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors">
                         <FileText size={20} /><span>Contracts</span>
+                    </Link>
+                    <Link to="/search" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors">
+                        <Search size={20} /><span>Advanced Scouting</span>
                     </Link>
                 </nav>
 
